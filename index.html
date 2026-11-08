@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pocket`nt</title>
+<meta name="description" content="Catatan pengeluaran bersama: harian, mingguan, bulanan, dengan grafik kebutuhan primer dan sekunder.">
+<meta name="theme-color" content="#0E7C6B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pocket`nt">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script type="module" src="js/app.js"></script>
+</head>
+<body>
+
+<div id="boot" class="boot"><div>Memuat Pocket`nt…</div></div>
+
+<!-- Konfigurasi Supabase belum diisi -->
+<main id="cfg" class="narrow" hidden>
+  <div class="brand"><h1>Pocket`nt</h1></div>
+  <section class="card">
+    <h2>Konfigurasi belum diisi</h2>
+    <p class="msg">Buka berkas <code>js/config.js</code>, isi URL dan anon key proyek Supabase kamu, lalu muat ulang halaman ini. Langkah lengkapnya ada di <code>README.md</code>.</p>
+  </section>
+</main>
+
+<!-- Masuk / daftar -->
+<main id="auth" class="narrow" hidden>
+  <div class="brand">
+    <h1>Pocket`nt</h1>
+    <p class="sub">Catat pengeluaran bareng, lihat ke mana uangnya pergi.</p>
+  </div>
+  <section class="card">
+    <div class="tabs" role="group" aria-label="Masuk atau daftar">
+      <button type="button" data-auth="login" aria-pressed="true">Masuk</button>
+      <button type="button" data-auth="signup" aria-pressed="false">Daftar</button>
+    </div>
+    <form id="authf" novalidate>
+      <div id="namerow" hidden>
+        <label for="aname">Nama panggilan</label>
+        <input id="aname" autocomplete="name" maxlength="40" placeholder="mis. Bima">
+      </div>
+      <label for="aemail">Email</label>
+      <input id="aemail" type="email" autocomplete="email" inputmode="email">
+      <label for="apass">Kata sandi</label>
+      <input id="apass" type="password" autocomplete="current-password" minlength="6">
+      <button type="submit" class="save" id="authbtn">Masuk</button>
+      <p class="fmsg" id="authmsg" role="status"></p>
+    </form>
+  </section>
+</main>
+
+<!-- Buat atau gabung kantong -->
+<main id="setup" class="narrow" hidden>
+  <div class="brand">
+    <h1>Pocket`nt</h1>
+    <p class="sub">Buat kantong baru, atau gabung ke kantong yang sudah ada.</p>
+  </div>
+  <section class="card">
+    <h2>Buat kantong baru</h2>
+    <form id="createf" novalidate>
+      <label for="cname">Nama kantong</label>
+      <input id="cname" maxlength="60" autocomplete="off" placeholder="mis. Keuangan Rumah">
+      <label for="cdisp">Namamu di kantong ini</label>
+      <input id="cdisp" maxlength="40" autocomplete="nickname">
+      <button type="submit" class="save">Buat kantong</button>
+      <p class="fmsg" id="cmsg" role="status"></p>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Gabung dengan kode</h2>
+    <form id="joinf" novalidate>
+      <label for="jcode">Kode undangan</label>
+      <input id="jcode" maxlength="20" autocapitalize="characters" autocomplete="off" placeholder="mis. 3F9A1C0B7D22">
+      <label for="jdisp">Namamu di kantong ini</label>
+      <input id="jdisp" maxlength="40" autocomplete="nickname">
+      <button type="submit" class="save">Gabung</button>
+      <p class="fmsg" id="jmsg" role="status"></p>
+    </form>
+  </section>
+  <div class="setupfoot">
+    <button type="button" class="linkbtn" id="setupback" hidden>Kembali ke kantong</button>
+    <button type="button" class="linkbtn" id="logout2">Keluar</button>
+  </div>
+</main>
+
+<!-- Aplikasi utama -->
+<div id="main" class="wrap" hidden>
+  <header class="top">
+    <div class="titleblock">
+      <h1>Pocket`nt</h1>
+      <div class="pocketline">
+        <select id="pocketsel" aria-label="Pilih kantong" hidden></select>
+        <span id="pname" class="sub"></span>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="sync" id="sync" data-s="loading" aria-live="polite"><i></i><span id="synctxt">Memuat…</span></span>
+      <button type="button" class="ghost" id="invbtn">Undang</button>
+      <button type="button" class="ghost" id="addpocket">Kantong lain</button>
+      <button type="button" class="ghost" id="logout">Keluar</button>
+    </div>
+  </header>
+
+  <section class="card invite" id="invitebox" hidden aria-label="Undang anggota">
+    <h2>Undang anggota</h2>
+    <p class="msg">Bagikan kode ini. Siapa pun yang memilikinya bisa bergabung dan ikut mencatat di kantong ini.</p>
+    <div class="codeline">
+      <code id="invcode"></code>
+      <button type="button" class="ghost" id="copycode">Salin</button>
+      <button type="button" class="ghost" id="sharecode" hidden>Bagikan</button>
+    </div>
+    <p class="msg" id="invmsg" role="status"></p>
+    <p class="msg" id="memberlist"></p>
+  </section>
+
+  <div class="notice" id="notice" hidden></div>
+
+  <div class="controls">
+    <div class="tabs" role="group" aria-label="Periode">
+      <button type="button" data-mode="hari" aria-pressed="false">Harian</button>
+      <button type="button" data-mode="minggu" aria-pressed="false">Mingguan</button>
+      <button type="button" data-mode="bulan" aria-pressed="true">Bulanan</button>
+    </div>
+    <div class="nav">
+      <button type="button" id="prev" aria-label="Periode sebelumnya">‹</button>
+      <span class="lbl" id="plabel" aria-live="polite"></span>
+      <button type="button" id="next" aria-label="Periode berikutnya">›</button>
+      <button type="button" id="now" class="now">Sekarang</button>
+    </div>
+    <button type="button" id="pdf" class="pdfbtn">Unduh PDF</button>
+  </div>
+  <p class="pdfmsg" id="pdfmsg" role="status" hidden></p>
+
+  <div class="layout">
+    <section id="bal" class="card" aria-label="Saldo kantong">
+      <div id="baldisplay"></div>
+      <form id="balform" novalidate hidden>
+        <h2>Saldo awal</h2>
+        <label for="balamt">Jumlah saldo awal</label>
+        <div class="money"><span>Rp</span><input id="balamt" inputmode="numeric" autocomplete="off" placeholder="5.000.000"></div>
+        <label for="baldate">Dihitung sejak tanggal</label>
+        <input type="date" id="baldate">
+        <p class="msg hint">Pengeluaran sejak tanggal ini dikurangkan dari saldo awal. Isi 0 untuk menghapus saldo.</p>
+        <div class="formbtns">
+          <button type="submit" class="save" id="balsave">Simpan saldo</button>
+          <button type="button" class="ghost" id="balcancel">Batal</button>
+        </div>
+        <p class="fmsg" id="balmsg" role="status"></p>
+      </form>
+    </section>
+
+    <section id="sum" aria-label="Ringkasan"></section>
+
+    <section class="card formcard" aria-label="Catat pengeluaran">
+      <form id="f" novalidate>
+        <h2>Catat pengeluaran</h2>
+        <label for="amount">Jumlah</label>
+        <div class="money"><span>Rp</span><input id="amount" inputmode="numeric" autocomplete="off" placeholder="25.000"></div>
+        <label for="cat">Untuk apa</label>
+        <select id="cat"></select>
+        <p class="ctype" id="ctype"></p>
+        <label for="date">Tanggal</label>
+        <input type="date" id="date">
+        <label for="note">Catatan <small>(opsional)</small></label>
+        <input id="note" maxlength="80" autocomplete="off" placeholder="mis. nasi padang siang">
+        <button type="submit" class="save" id="save">Simpan pengeluaran</button>
+        <p class="fmsg" id="fmsg" role="status"></p>
+      </form>
+    </section>
+
+    <section id="charts" class="stack" aria-label="Grafik"></section>
+    <section id="who" class="card" aria-label="Pengeluaran per anggota"></section>
+    <section id="list" class="card" aria-label="Daftar pengeluaran"></section>
+  </div>
+</div>
+
+</body>
+</html>

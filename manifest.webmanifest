@@ -1,0 +1,17 @@
+{
+  "name": "Pocket`nt",
+  "short_name": "Pocket`nt",
+  "description": "Catatan pengeluaran bersama dengan grafik primer dan sekunder.",
+  "lang": "id",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1F5F2",
+  "theme_color": "#0E7C6B",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
